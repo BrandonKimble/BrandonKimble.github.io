@@ -1,0 +1,27 @@
+---
+title: First Post!
+author: ''
+date: '2021-05-10'
+slug: first-post
+categories: []
+tags: []
+description: ''
+---
+I am typing a bunch of nonsense lalalala lorem ipsum. Oh yeah... here's a link to my project!
+[Link to project 1](/project/project1/)
+
+Also, I'm going to show you how the reticulate package works in R! Excited? Yeah me too.
+So, you load it up with this...
+```{R}
+library(reticulate)
+hi<-"Hello"
+```
+
+Then, you add a python chunk and incorporate the R code like so... 
+```{python}
+hi = "world"
+print(r.hi,hi)
+```
+And, that's all she wrote!
+
+![On another note, heres a picture of my friends and I starting a treck up Mammoth Mt. in California.](/post/2021-05-09-my-first-post_files/IMG_4662 2.jpg)![](/post/2021-05-10-first-post_files/IMG_4662 2.jpg)

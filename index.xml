@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Brandon Kimble</title>
+    <link>/</link>
+    <description>Recent content on Brandon Kimble</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Mon, 10 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>First Post!</title>
+      <link>/post/2021/05/10/first-post/</link>
+      <pubDate>Mon, 10 May 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021/05/10/first-post/</guid>
+      <description>I am typing a bunch of nonsense lalalala lorem ipsum. Oh yeah… here’s a link to my project! Link to project 1
+Also, I’m going to show you how the reticulate package works in R! Excited? Yeah me too. So, you load it up with this…
+library(reticulate) hi&amp;lt;-&amp;quot;Hello&amp;quot; Then, you add a python chunk and incorporate the R code like so…
+hi = &amp;quot;world&amp;quot; print(r.hi,hi) ## Hello world And, that’s all she wrote!</description>
+    </item>
+    
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>library(tidyverse) library(dplyr) library(ggplot2) library(ggExtra) library(lmtest) library(sandwich) library(plotROC) library(glmnet) corruption_index = read.csv(&amp;#39;merged_cpi_data.csv&amp;#39;) crypto_volume = read.csv(&amp;#39;Book2.csv&amp;#39;) volume = crypto_volume %&amp;gt;% mutate(&amp;quot;WE/EU&amp;quot;= (WE.EU + WE.EU.1) / 2, .keep=&amp;quot;unused&amp;quot;) %&amp;gt;% mutate(&amp;quot;AP&amp;quot;= (AP + AP.1) / 2, .keep=&amp;quot;unused&amp;quot;) %&amp;gt;% mutate(&amp;quot;AME&amp;quot;= (AME + AME.1) / 2, .keep=&amp;quot;unused&amp;quot;) %&amp;gt;% mutate(date = as.Date(date, format=&amp;quot;%m/%d/%y&amp;quot;)) %&amp;gt;% mutate(Year = format(date, format=&amp;quot;%Y&amp;quot;)) %&amp;gt;% mutate_all(as.numeric) %&amp;gt;% na.omit() %&amp;gt;% pivot_longer(cols=2:7, names_to=&amp;quot;Region&amp;quot;, values_to=&amp;quot;Volume&amp;quot;) %&amp;gt;% group_by(Year, Region) %&amp;gt;% summarize(Volume = mean(Volume)) data = corruption_index %&amp;gt;% select(Year, Country, CPI=CPI.</description>
+    </item>
+    
+    <item>
+      <title>Project_1</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>library(tidyverse) library(dplyr) library(ggplot2) library(ggExtra) corruption_index = read.csv(&amp;quot;merged_cpi_data.csv&amp;quot;) crypto_volume = read.csv(&amp;quot;Book2.csv&amp;quot;) glimpse(corruption_index) ## Rows: 1,772 ## Columns: 34 ## $ Year &amp;lt;int&amp;gt; 2010, 2010, 2010, 2010, 2010, … ## $ Country &amp;lt;chr&amp;gt; &amp;quot;Denmark&amp;quot;, &amp;quot;New Zealand&amp;quot;, &amp;quot;Sin… ## $ CPI.Score &amp;lt;dbl&amp;gt; 93, 93, 93, 92, 92, 89, 88, 87… ## $ Rank &amp;lt;int&amp;gt; 1, 1, 1, 4, 4, 6, 7, 8, 8, 10,… ## $ Number.of.Sources &amp;lt;int&amp;gt; 6, 6, 9, 6, 6, 6, 6, 8, 6, 6, … ## $ Minimum.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/</guid>
+      <description> Check out some of my coding projects below:
+ Wrangling &amp;amp; Exploratory Data Analysis
+ Modeling, Inference, Prediction
+  -- </description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>    </description>
+    </item>
+    
+  </channel>
+</rss>

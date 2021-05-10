@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Brandon Kimble</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on Brandon Kimble</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Mon, 10 May 2021 00:00:00 +0000</lastBuildDate><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>First Post!</title>
+      <link>/post/2021/05/10/first-post/</link>
+      <pubDate>Mon, 10 May 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021/05/10/first-post/</guid>
+      <description>I am typing a bunch of nonsense lalalala lorem ipsum. Oh yeah… here’s a link to my project! Link to project 1
+Also, I’m going to show you how the reticulate package works in R! Excited? Yeah me too. So, you load it up with this…
+library(reticulate) hi&amp;lt;-&amp;quot;Hello&amp;quot; Then, you add a python chunk and incorporate the R code like so…
+hi = &amp;quot;world&amp;quot; print(r.hi,hi) ## Hello world And, that’s all she wrote!</description>
+    </item>
+    
+  </channel>
+</rss>

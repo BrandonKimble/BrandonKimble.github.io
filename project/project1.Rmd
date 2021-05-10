@@ -1,0 +1,131 @@
+---
+title: "Project_1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggExtra)
+
+corruption_index = read.csv('merged_cpi_data.csv')
+crypto_volume = read.csv('Book2.csv')
+glimpse(corruption_index)
+glimpse(crypto_volume)
+```
+    
+```{r}
+volume = crypto_volume %>% 
+    mutate("WE/EU"= (WE.EU + WE.EU.1) / 2, .keep="unused") %>%
+    mutate("AP"= (AP + AP.1) / 2, .keep="unused") %>%
+    mutate("AME"= (AME + AME.1) / 2, .keep="unused") %>%
+    mutate(date = as.Date(date, format="%m/%d/%y")) %>%
+    mutate(Year = format(date, format="%Y")) %>%
+    mutate_all(as.numeric) %>% na.omit() %>%
+    pivot_longer(cols=2:7, names_to="Region", values_to="Volume") %>%
+    group_by(Year, Region) %>% summarize(Volume = mean(Volume))
+    
+data = corruption_index %>%
+    select(Year, Country, CPI=CPI.Score, Region) %>%
+    filter(Year>=2013 & Year<=2018) %>% na.omit() %>%
+    left_join(volume, by=c("Year", "Region"))
+```
+
+Cryptocurrency is regarded by some to be the catalyst that sends the world into the next revolution, much like the internet did in the late 90s. Cryptocurrency could possibly be the most democratizing technology created thus far in history. The potential of a currency with no overhead is massive. With the growth and widespread use of cryptocurrencies, comes forms of banking, business, and who knows what else. The desire for democratization of everything, pushed forward many novel technologies, and this theme is supported by history. If a technology democratizes an aspect of society that was once not available to the public, that technology will inevitably become the new norm, at least in a democracy. With this is mind, my thought was that, if folks in other countries were unhappy with their government (lets say due to corruption), perhaps they might turn to cryptocurrencies as a hedge against a corrupt system. For this reason, I chose the annual Corruption Perception Index and the largest peer-to-peer cryptocurrency exchange, LocalBitcoin, to gather data from. I am only interested in the cryptocurrency exchange volume in US dollars (e.g., $10M),and the corruption perception index (CPI) for each year, along the country and region the CPI score belong to. Potential problems may come up, such as needing to average out the trading volume data for every year rather than every month. This will be the case if there is not a good way to merge data that includes different time scales. To tidy up my datasets in preparation to be merged, I first combined countries in columns that belong to the same region. Then, I formatted my dates to only include the year rather than month, day, and year. Being that the timescales were now I years, I then averaged the trading volume for given year. Since, Cryptocurrency only really started gaining in traction around 2013 so, the dates ranges from 2013 to 2018. The regional abbreviations go as follows: AME - Americas, SSA - Sub-Saharan Africa, ECA - Eastern Europe & Central Asia, MENA - Middle East And North Africa, WE/EU - Western Europe & European Union, and AP - Asia Pacific. Given the data, I expect trading volume to increase in a region if the region's corruption perception index increases. That is if people feel as though their government is corrupt, they will turn to unregulated forms of currency. 
+
+```{r}
+data %>% summarize(minYear = min(Year), maxYear = max(Year))
+
+data %>% summarize(uniqueCountries = n_distinct(Country))
+
+data %>% group_by(Region) %>% summarize(frequency = n())
+
+data %>% group_by(Region) %>% 
+    summarize(meanTradingVolume = mean(Volume), sdTradingVolume = sd(Volume)) %>% 
+    arrange(desc(meanTradingVolume))
+
+data %>% group_by(Region, Country) %>% 
+    summarize(totPercentChange = (last(CPI) - first(CPI)) / first(CPI)) %>% 
+    arrange(desc(totPercentChange))
+```
+
+The third summary statistic details number of time each region shows up in the dataset. Since, countries show up more than once (once for every year), these frequency values do not merely denote the number of countries represent within a region, but represents the total number of time a particular region shows up in the dataset. One could easy derive the proportion of regional representation within the data from the frequencies. The forth summary statistic just shows the average cryptocurrency trading volume for a given region. The last statistic, represents the percent change in a countries corruption perception index from the first year is was recorded (2013) to the last (2018). Essentially, this represents the change sentiment in a countries' people toward the established government.
+
+```{r}
+cormat = data %>% select(Year, CPI, Volume) %>% cor(use = "pair")
+
+tidycor <- cormat %>% as.data.frame %>% rownames_to_column("var1") %>% 
+    pivot_longer(-1, names_to = "var2", values_to = "correlation")
+
+tidycor %>% ggplot(aes(var1, var2, fill = correlation)) +
+    geom_tile() + scale_fill_gradient2(low = "red", mid = "white", high = "blue") + 
+    geom_text(aes(label = round(correlation, 2)), color = "black", size = 5) + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    coord_fixed()
+
+ggplot(data, aes(x = as.factor(Year), y = CPI)) + 
+    geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(alpha = .5, aes(color = Country), show.legend = F) +
+    geom_smooth(method = "lm", se = T, aes(group = 1)) + 
+    facet_wrap(~Region) +
+    ggtitle("Change in Corruption Perception per Region") + 
+    ylab("CPI (Corruption Perception Index)") + 
+    xlab("Year") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_y_continuous(breaks = seq(0, 100, 10))
+
+ggplot(data, aes(x = as.factor(Year), y = CPI, fill = Volume)) +
+    geom_boxplot(outlier.shape = NA) + 
+    scale_fill_gradient(low = "red", high = "green") + 
+    facet_wrap(~Region) +
+    ggtitle("Change in Crypocurrency Trading Volume per Region") + 
+    ylab("CPI (Corruption Perception Index)") +
+    xlab("Year") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_y_continuous(breaks = seq(0, 100, 10))
+
+ggplot(data, aes(x = Year, y = CPI, color = Region, size = Volume)) + 
+    geom_point(stat = "summary") + 
+    scale_size_continuous(range = c(5, 20)) + 
+    scale_size(limits = c(0, 250000000)) +
+    ggtitle("Change in Corruption Perception and Cryptocurrency Trading Volume") + 
+    ylab("CPI (Corruption Perception Index)") + 
+    xlab("Year") +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    scale_y_continuous(breaks = seq(0, 100, 10))
+
+```
+
+The correlation heatmap shows very little correlation between Volume and CPI, which not what I initially expected. However, given the lack of history behind cryptocurrency, I realize it is difficult to identify any relationships. The second, plot is more than just colorful, it shows that the overall corruption perception index for a given region is largely consistent over time. This is mostly likely why there is not much of relationship to be found between, CPI and cryptocurrency trading volume -- the over all corruption index of a region simply doesn't change much over a six year period. The third plot represents how regional cryptocurrency trading volume changes over time. One can see the volume typically increases over time, as shown by the increasingly green boxplots within each region. The only outlier here is the Middle East And North Africa, which stay pretty consistent in terms of volume. Eastern Europe & Central Asia, however, increased in trading pretty drastically between 2015 and 2018. One can assume that the region's low overall CPIU score could have something to do the it's populations quick adoption of crytocurrency. The last and final plot is meant to show the overall trend of growing cryptocurrency trading volumes given time. Here, time seems to be the best predictor of crypto adoption, which is to be expected.
+
+```{r}
+library(cluster)
+numdata = data %>% select_if(is.numeric)
+
+sil_width<-vector()
+for(i in 2:10){
+  pam_fit <- pam(numdata, k = i)
+  sil_width[i] <- pam_fit$silinfo$avg.width
+}
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name="k",breaks=1:10)
+
+pam1 = numdata %>% scale %>% pam(k = 3)
+pam1
+
+pamclust = numdata %>% mutate(cluster = as.factor(pam1$clustering))
+pamclust %>% ggplot(aes(CPI, Volume, color = cluster)) + geom_point()
+
+library(GGally)
+ggpairs(pamclust, columns=1:4, aes(color=cluster))
+
+plot(pam1,which=2)
+```
+
+Given that regions consist of many different countries all with their own governments and systems it is easy to se why the average silhouette with suggests the structure of the clustered data is weak and could be artificial. There is simply too much variation in the CPI score of countries with a region. As expected, trading volume and progression through time yeilded a very positive correlation. I did not expect the relationship between CPI scores and Volume to be so low. It seems the lower the CPI score of a region, the greater the trading volume. The relationships betwee the other variables ans time are largly unimportant. The CPI scores of countries typically don't change over a few years, while cryptocurrency trading volume increases across all regions.

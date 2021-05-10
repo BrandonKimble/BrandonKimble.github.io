@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Brandon Kimble" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/post/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<pre class="r"><code>library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggExtra)
+library(lmtest)
+library(sandwich)
+library(plotROC)
+library(glmnet)
+
+corruption_index = read.csv(&#39;merged_cpi_data.csv&#39;)
+crypto_volume = read.csv(&#39;Book2.csv&#39;)</code></pre>
+<pre class="r"><code>volume = crypto_volume %&gt;% 
+    mutate(&quot;WE/EU&quot;= (WE.EU + WE.EU.1) / 2, .keep=&quot;unused&quot;) %&gt;%
+    mutate(&quot;AP&quot;= (AP + AP.1) / 2, .keep=&quot;unused&quot;) %&gt;%
+    mutate(&quot;AME&quot;= (AME + AME.1) / 2, .keep=&quot;unused&quot;) %&gt;%
+    mutate(date = as.Date(date, format=&quot;%m/%d/%y&quot;)) %&gt;%
+    mutate(Year = format(date, format=&quot;%Y&quot;)) %&gt;%
+    mutate_all(as.numeric) %&gt;% na.omit() %&gt;%
+    pivot_longer(cols=2:7, names_to=&quot;Region&quot;, values_to=&quot;Volume&quot;) %&gt;%
+    group_by(Year, Region) %&gt;% summarize(Volume = mean(Volume))
+    
+data = corruption_index %&gt;%
+    select(Year, Country, CPI=CPI.Score, Region) %&gt;%
+    filter(Year&gt;=2013 &amp; Year&lt;=2018) %&gt;% na.omit() %&gt;%
+    left_join(volume, by=c(&quot;Year&quot;, &quot;Region&quot;))</code></pre>
+<p>Cryptocurrency is regarded by some to be the catalyst that sends the world into the next digital revolution, much like the internet did in the late 90s. Cryptocurrency is digital currency that is attached to no single governing body or physical store of value. If widely adopted, such a currency could represent the most democratizing technology created thus far in history. Given that anyone in the world now has the option to invest in digital currencies, it is very possible that populations unhappy with their government due to corruption might turn to cryptocurrencies as a hedge against a corrupt system. I expect trading volume to increase in a region if the region’s corruption perception index increases. That is if people feel as though their government is corrupt, they will turn to unregulated forms of currency.</p>
+<p>To find out if this trend has already started, I gathered data from the Transparency International’s Corruption Perception Index, which is currently the most robust measure of the corruption available to the public. I then downloaded trade volume data from the largest peer-to-peer cryptocurrency exchange, LocalBitcoin. The tidyied dataset contains cryptocurrency trade volume in US dollars (e.g., $10M) averaged per year, and the Corruption Perception Index (CPI) for each year, along with the associated country and region. The time scale range from 2013 to 2018 and the regional abbreviations are as follows: AME - Americas, SSA - Sub-Saharan Africa, ECA - Eastern Europe &amp; Central Asia, MENA - Middle East And North Africa, WE/EU - Western Europe &amp; European Union, and AP - Asia Pacific. The full dataset contains 1056 observations.</p>
+<pre class="r"><code>man1 = manova(cbind(CPI, Volume)~Region, data=data)
+summary(man1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## Region 5 0.52725 75.18 10 2100 &lt; 2.2e-16 ***
+## Residuals 1050
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>summary.aov(man1)</code></pre>
+<pre><code>## Response CPI :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Region 5 146808 29361.6 120.24 &lt; 2.2e-16 ***
+## Residuals 1050 256392 244.2
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response Volume :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Region 5 2.9549e+17 5.9099e+16 40.931 &lt; 2.2e-16 ***
+## Residuals 1050 1.5161e+18 1.4439e+15
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>pairwise.t.test(data$CPI, data$Region, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  data$CPI and data$Region 
+## 
+##       AME     AP      ECA     MENA    SSA    
+## AP    0.82808 -       -       -       -      
+## ECA   5.7e-08 2.3e-07 -       -       -      
+## MENA  0.00598 0.01144 0.01834 -       -      
+## SSA   3.6e-15 7.1e-14 0.36142 0.00022 -      
+## WE/EU &lt; 2e-16 &lt; 2e-16 &lt; 2e-16 &lt; 2e-16 &lt; 2e-16
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(data$Volume, data$Region, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  data$Volume and data$Region 
+## 
+##       AME     AP      ECA     MENA    SSA  
+## AP    3.6e-05 -       -       -       -    
+## ECA   2.4e-05 1.3e-14 -       -       -    
+## MENA  &lt; 2e-16 1.5e-08 &lt; 2e-16 -       -    
+## SSA   2.1e-12 0.016   &lt; 2e-16 3.8e-05 -    
+## WE/EU 1.0e-06 0.495   &lt; 2e-16 2.7e-07 0.090
+## 
+## P value adjustment method: none</code></pre>
+<p>The MANOVA suggest significant differences were found among the five regions for at least one of the dependent variables, <em>Pillai trace</em> = 0.53, <em>pseudo F</em>(10, 2100) = 75.18, <em>p</em> &lt; 0.0001. The univariate ANOVAs for each dependent variable were conducted, using the Bonferroni method for controlling Type I error rates for multiple comparisons. The univariate ANOVAs for CPI and Volume were also significant, <em>F</em>(5, 1050) = 120.24, <em>p</em> &lt; 0.0001, and <em>F</em>(5, 1050) = 40.93, <em>p</em> &lt; 0.0001, respectively. The follow up post-hoc t-tests suggest many regions have mean differences in CPI and Volume. However, since there have been 33 tests done, the alpha cut-off sits at .05/33 which is roughly 0.0015. Using this cut-off to adjust for multiple comparisons, multiple regions are still significantly different from each other in terms of CPI and Volume (bonferroni α = .05/33 = 0.0015). As for meeting MANOVA assumptions, given that the majority of the world has a long way to go in terms of development and access to cryptocurrency trading platforms, this data likely violates the assumption of multivariate normality. There are far fewer regions with high CPI scores and cryptocurrency volume. For these reasons it is very likely we violate other MANOVA assumptions.</p>
+<pre class="r"><code>#compute distances/dissimilarities
+dists = data %&gt;% select(CPI, Volume) %&gt;% dist()
+
+#compute observed F
+SST = sum(dists^2)/1056
+SSW = data %&gt;% group_by(Region) %&gt;% select(Region, CPI, Volume) %&gt;%
+  do(d=dist(.[-1],&quot;euclidean&quot;)) %&gt;% ungroup() %&gt;%
+  summarize(sum(d[[1]]^2)/186 + sum(d[[2]]^2)/174 + sum(d[[3]]^2)/114 + sum(d[[4]]^2)/108 + sum(d[[5]]^2)/288 + sum(d[[6]]^2)/186) %&gt;% pull
+
+F_obs = ((SST-SSW)/(5))/(SSW/(1050)) #observed F statistic
+F_obs</code></pre>
+<pre><code>## [1] 40.93094</code></pre>
+<pre class="r"><code># compute null distribution for F
+Fs = replicate(1000,{
+  new = data %&gt;% mutate(Region=sample(Region)) #permute the species vector
+  SSW = new %&gt;% group_by(Region) %&gt;% select(Region, CPI, Volume) %&gt;%
+    do(d=dist(.[-1],&quot;euclidean&quot;)) %&gt;% ungroup() %&gt;%
+    summarize(sum(d[[1]]^2)/186 + sum(d[[2]]^2)/174 + sum(d[[3]]^2)/114 + sum(d[[4]]^2)/108 + sum(d[[5]]^2)/288 + sum(d[[6]]^2)/186) %&gt;% pull
+  
+  ((SST-SSW)/5)/(SSW/1050) #calculate new F ratio on randomized data
+})
+
+{hist(Fs, prob = T); abline(v=F_obs, col=&quot;red&quot;, add=T)}</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>mean(Fs&gt;F_obs)</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p>Randomization-test MANOVA (PERMANOVA)</p>
+<p>Null Hypothesis: For both response variables (CPI, Volume), means for each region are equal.
+Alternative Hypothesis: For at least one response variable, at least one region’s mean is different.</p>
+<p>Since the p-value is effectively zero, we reject the null hypothesis as we did before, but this time we haven’t made any assumptions. None of the 1000 F statistics generated under the null hypothesis were larger than our actual F statistic (40.93). This affirms that regions do differ from each other based on CPI and volume (<em>p</em> &lt; 0.0001).</p>
+<pre class="r"><code>data$CPI_c = data$CPI - mean(data$CPI, na.rm = T)
+fit = lm(Volume ~ Region * CPI_c, data = data)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = Volume ~ Region * CPI_c, data = data)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -75761772 -21882447 -13384297 27607622 147339944
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 47388816 2795127 16.954 &lt; 2e-16 ***
+## RegionAP -16671560 4018172 -4.149 3.61e-05 ***
+## RegionECA 24627758 5825042 4.228 2.57e-05 ***
+## RegionMENA -43202143 4703968 -9.184 &lt; 2e-16 ***
+## RegionSSA -25483826 4090960 -6.229 6.78e-10 ***
+## RegionWE/EU -19584845 5888452 -3.326 0.000912 ***
+## CPI_c -23980 161652 -0.148 0.882101
+## RegionAP:CPI_c 74553 211581 0.352 0.724637
+## RegionECA:CPI_c 619913 428887 1.445 0.148646
+## RegionMENA:CPI_c 18478 275109 0.067 0.946463
+## RegionSSA:CPI_c 19567 243976 0.080 0.936092
+## RegionWE/EU:CPI_c 32982 247241 0.133 0.893902
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 38060000 on 1044 degrees of
+freedom
+## Multiple R-squared: 0.165, Adjusted R-squared: 0.1562
+## F-statistic: 18.76 on 11 and 1044 DF, p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>ggplot(data, aes(CPI, Volume, color = Region)) + geom_smooth(method = &quot;lm&quot;, se = F, fullrange = T) +
+  geom_point() + geom_vline(xintercept=0, lty=2) + geom_vline(aes(xintercept=mean(CPI)))</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-5-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>resids = fit$residuals
+fitvals = fit$fitted.values
+ggplot() + geom_point(aes(fitvals,resids)) + geom_hline(yintercept=0, color=&#39;red&#39;)</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-5-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>bptest(fit)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit
+## BP = 421.85, df = 11, p-value &lt; 2.2e-16</code></pre>
+<pre class="r"><code>ggplot() + geom_histogram(aes(resids), bins=20)</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-5-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot() + geom_qq(aes(sample=resids)) + geom_qq_line(aes(sample=resids))</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-5-4.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ks.test(resids, &quot;pnorm&quot;, mean=0, sd(resids))</code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.19293, p-value &lt; 2.2e-16
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>coeftest(fit, vcov=vcovHC(fit))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 47388816 2764442 17.1423 &lt; 2.2e-16 ***
+## RegionAP -16671560 3825545 -4.3580 1.442e-05 ***
+## RegionECA 24627758 11473913 2.1464 0.03207 *
+## RegionMENA -43202143 2832874 -15.2503 &lt; 2.2e-16 ***
+## RegionSSA -25483826 3551223 -7.1761 1.359e-12 ***
+## RegionWE/EU -19584845 4205525 -4.6569 3.623e-06 ***
+## CPI_c -23980 159310 -0.1505 0.88038
+## RegionAP:CPI_c 74553 201377 0.3702 0.71130
+## RegionECA:CPI_c 619913 861069 0.7199 0.47173
+## RegionMENA:CPI_c 18478 163506 0.1130 0.91004
+## RegionSSA:CPI_c 19567 210406 0.0930 0.92592
+## RegionWE/EU:CPI_c 32982 195666 0.1686 0.86617
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>In interpreting the coefficient estimates, the intercept value of 47388816 represents the predicted trade volume in AME (Americas) at an average CPI (Corruption Perception Index). Hypothetically, lets say every region has an average CPI score. While controlling for CPI, AP (Asia Pacific) would have a predicted trade volume that is $16671560 lower on average than that of AME, ECA (Eastern Europe &amp; Central Asia) would have a predicted trade volume that is $24627758 greater, MENA (Middle East &amp; North Africa) would have a predicted volume that is $43202143 lower, SSA (Sub-Saharan Africa) would have a predicted volume that is $25483826 lower, and WE/EU (Western Europe &amp; European Union) would have a predicted volume that is $19584845 lower. Controlling for region, for every one-unit increase in AME’s CPI, predicted trade volume decreases by $23980. Slope of CPI on volume for AP is 74553 greater than for AME; ECA’s is 619913 greater; MENA’s is 18478 greater; SSA’s is 19567 greater, and WE/EU’s is 32982 greater.</p>
+<p>According to the adjusted R-squared value, roughly 15.6% of variability in trade volume is explained by the model.</p>
+<p>Using homoskedasticity robust standard errors, all regions retained their significant effects while controlling for CPI. However, since the standard errors decreased for all regions but ECA, ECA decreased in significance (<em>t</em> = 2.1464, <em>df</em> = 1044, <em>p</em> &lt; 0.01), while WE/EW increased in significance (<em>t</em> = -4.6569, <em>df</em> = 1044, <em>p</em> &lt; 0.0001). The remaining regions, AP (<em>t</em> = -4.3580, <em>df</em> = 1044, <em>p</em> &lt; 0.0001), MENA (<em>t</em> = -15.2503, <em>df</em> = 1044, <em>p</em> &lt; 0.0001), and SSA (<em>t</em> = -7.1761, <em>df</em> = 1044, <em>p</em> &lt; 0.0001) stayed fairly consistent in terms of their significance. The coefficient estimates for CPI controlling for region and all interactions remained insignificant despite the use of robust standard errors.</p>
+<pre class="r"><code>samp = replicate(5000, {
+  boot_dat = sample_frac(data, replace=T)
+  fit = lm(Volume ~ Region * CPI_c, data = boot_dat)
+  coef(fit)
+})
+samp %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) RegionAP RegionECA RegionMENA RegionSSA
+RegionWE/EU CPI_c RegionAP:CPI_c
+## 1 2757412 3778388 11050804 2827185 3565979 4137857
+158689.2 197295.5
+## RegionECA:CPI_c RegionMENA:CPI_c RegionSSA:CPI_c
+RegionWE/EU:CPI_c
+## 1 838191.5 162798.7 210105.2 195487</code></pre>
+<p>When rerunning the same regression model while computing bootstrapped standard errors (SEs), the model produced SEs that were larger than both the original SEs and the robust SEs, with the exception of the SEs of MENA, SSA, and WE/EU, which are now 2918839, 3764402, and 4536599, respectively. These three regions were given larger SEs before computing robust SEs. The original SEs were as follows: 4703968, 4090960, and 5888452, respectively. However, these SE values are larger than the robust SEs.</p>
+<pre class="r"><code>class_diag &lt;- function(probs,truth){
+  #CONFUSION MATRIX: CALCULATE ACCURACY, TPR, TNR, PPV
+  
+  if(is.character(truth)==TRUE) truth&lt;-as.factor(truth)
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+  
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)), factor(truth, levels=c(0,1)))
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  
+  #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup &lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR &lt;-c(0, TPR[!dup], 1); FPR&lt;-c(0, FPR[!dup], 1)
+  n &lt;- length(TPR)
+  auc &lt;- sum(((TPR[-1] + TPR[-n])/2) * (FPR[-1] - FPR[-n]))
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+data = data %&gt;% mutate(Region=ifelse(Region==&quot;SSA&quot;, &quot;Sub-Saharan Africa&quot;, &quot;elsewhere&quot;))
+data = data %&gt;% mutate(y=ifelse(Region==&quot;Sub-Saharan Africa&quot;, 1, 0))
+
+fit = glm(y~Volume + CPI, data=data, family=&quot;binomial&quot;)
+data$probs = predict(fit, type=&quot;response&quot;)
+data$Region = factor(data$Region, levels=c(&quot;Sub-Saharan Africa&quot;, &quot;elsewhere&quot;))
+
+# coefficients
+coeftest(fit)</code></pre>
+<pre><code>##
+## z test of coefficients:
+##
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) 1.2948e+00 2.0315e-01 6.3739 1.843e-10 ***
+## Volume -9.4928e-09 2.1029e-09 -4.5142 6.355e-06 ***
+## CPI -5.1765e-02 5.1262e-03 -10.0981 &lt; 2.2e-16 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code># confusion matrix
+table(predict=as.numeric(data$probs&gt;.5), truth=data$y) %&gt;% addmargins</code></pre>
+<pre><code>##        truth
+## predict    0    1  Sum
+##     0    711  235  946
+##     1     57   53  110
+##     Sum  768  288 1056</code></pre>
+<pre class="r"><code># classification diagnostics
+class_diag(data$probs, data$y)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.7234848 0.1840278 0.9257812 0.4818182 0.7423955</code></pre>
+<pre class="r"><code># density plot
+data$logit = predict(fit, type=&quot;link&quot;)
+
+data %&gt;% ggplot() + geom_density(aes(logit, color=Region, fill=Region), alpha=.4) +
+  theme(legend.position=c(.85,.85)) + geom_vline(xintercept=0) + xlab(&quot;logit (log-odds)&quot;) +
+  geom_rug(aes(logit, color=Region))</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-7-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ROCplot&lt;-ggplot(data) + geom_roc(aes(d=Region, m=probs), n.cuts=0) 
+
+ROCplot</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-7-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7423955</code></pre>
+<p>The intercept coefficient estimate in this case represents the odds of a region being SSA when volume and CPI are zero. Controlling for CPI, going up one-unit in volume multiplies odds of a region being SSA by a factor of <span class="math inline">\(e^{-9.4928e-09} = 7.67e-16\)</span> (<em>p</em> &lt; 0.0001). Controlling for volume, going up one-unit in CPI multiplies odds of a region being SSA by a factor of <span class="math inline">\(e^{-5.1765e-02} = 1.05e-7\)</span> (<em>p</em> &lt; 0.0001).</p>
+<p>Overall, Accuracy is the proportion of correctly identified regions (0.723). Sensitivity (True Positive Rate, TPR) is the proportion of SSA regions correctly identified (0.184). Specificity (True Negative Rate, TNR) is the proportion of non-SSA regions correctly identified (0.926). Precision (Positive Predictive Value, PPV) is the proportion regions identified as SSA that actually are (0.482). Area under the curve (AUC) quantifies how well we are predicting overall. In our case the AUC represents the probability that a randomly selected region that is SSA has a higher predicted probability than a randomly selected region that is not SSA. According to AUC, the model overall prediction performance is fair (0.742). The ROC curve suggest it is slightly difficult to predict SSA from just volume and CPI.</p>
+<pre class="r"><code>corruption_index = read.csv(&#39;/Users/brandonkimble/UNI/Spring_2021/SDS_348/merged_cpi_data.csv&#39;)
+crypto_volume = read.csv(&#39;/Users/brandonkimble/UNI/Spring_2021/SDS_348/Book2.csv&#39;)
+
+volume = crypto_volume %&gt;% 
+    mutate(&quot;WE/EU&quot;= (WE.EU + WE.EU.1) / 2, .keep=&quot;unused&quot;) %&gt;%
+    mutate(&quot;AP&quot;= (AP + AP.1) / 2, .keep=&quot;unused&quot;) %&gt;%
+    mutate(&quot;AME&quot;= (AME + AME.1) / 2, .keep=&quot;unused&quot;) %&gt;%
+    mutate(date = as.Date(date, format=&quot;%m/%d/%y&quot;)) %&gt;%
+    mutate(Year = format(date, format=&quot;%Y&quot;)) %&gt;%
+    mutate_all(as.numeric) %&gt;% na.omit() %&gt;%
+    pivot_longer(cols=2:7, names_to=&quot;Region&quot;, values_to=&quot;Volume&quot;) %&gt;%
+    group_by(Year, Region) %&gt;% summarize(Volume = mean(Volume))
+    
+data = corruption_index %&gt;%
+    select(Year, Country, CPI=CPI.Score, Region) %&gt;%
+    filter(Year&gt;=2013 &amp; Year&lt;=2018) %&gt;% na.omit() %&gt;%
+    left_join(volume, by=c(&quot;Year&quot;, &quot;Region&quot;))
+
+df = data %&gt;% group_by(Country) %&gt;% summarize(count = n())
+bool = c(df[,2]==6)
+countries = as.vector(df$Country)[bool]
+data = data[data$Country %in% countries,]
+
+
+# in-sample classification diagnostics
+data = data %&gt;% mutate(y=ifelse(Region==&quot;SSA&quot;, 1, 0))
+data$Country = factor(data$Country)
+data$Region = NULL
+
+fit = glm(y~Country + Year + CPI + Volume, data=data, family=&quot;binomial&quot;)
+probs = predict(fit, type=&quot;response&quot;)
+class_diag(probs, data$y)</code></pre>
+<pre><code>##   acc sens spec ppv auc
+## 1   1    1    1   1   1</code></pre>
+<pre class="r"><code># 10-Fold CV
+set.seed(1234)
+k = 10
+data1 = data[sample(nrow(data)),]
+folds = cut(seq(1:nrow(data)), breaks=k, labels=F)
+diags = NULL
+for (i in 1:k) {      
+  train = data1[folds!=i,]
+  test = data1[folds==i,]
+  truth = test$y
+  
+  fit = glm(y~Country + Year + CPI + Volume, data=train, family=&quot;binomial&quot;)
+  probs = predict(fit, newdata=test, type=&quot;response&quot;)
+  diags = rbind(diags, class_diag(probs, truth))
+}
+summarize_all(diags, mean) </code></pre>
+<pre><code>##   acc sens spec ppv auc
+## 1   1    1    1   1   1</code></pre>
+<pre class="r"><code># LASSO
+y = as.matrix(data$y)
+x = model.matrix(y~-1+.,data=data)[,-1]
+x = scale(x)
+cv = cv.glmnet(x,y)
+
+{plot(cv$glmnet.fit, &quot;lambda&quot;, label=TRUE); abline(v = log(cv$lambda.1se)); abline(v = log(cv$lambda.min),lty=2)}</code></pre>
+<p><img src="/project/project2_files/figure-html/unnamed-chunk-8-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>cv = cv.glmnet(x,y,family=&quot;binomial&quot;)
+lasso = glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 167 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                                                  s0
+## (Intercept)                             -4.01657874
+## CountryAfghanistan                       .         
+## CountryAlbania                           .         
+## CountryAlgeria                           .         
+## CountryAngola                            1.10526541
+## CountryArgentina                         .         
+## CountryArmenia                           .         
+## CountryAustralia                         .         
+## CountryAustria                           .         
+## CountryAzerbaijan                        .         
+## CountryBahrain                           .         
+## CountryBangladesh                        .         
+## CountryBelarus                           .         
+## CountryBelgium                           .         
+## CountryBenin                             1.14295863
+## CountryBhutan                            .         
+## CountryBolivia                           .         
+## CountryBosnia and Herzegovina            .         
+## CountryBotswana                          1.19087908
+## CountryBrazil                            .         
+## CountryBulgaria                          .         
+## CountryBurkina Faso                      1.14695919
+## CountryBurundi                           1.10781212
+## CountryCambodia                          .         
+## CountryCameroon                          1.11903126
+## CountryCanada                            .         
+## CountryCentral African Republic          1.11483313
+## CountryChad                              1.10812041
+## CountryChile                             .         
+## CountryChina                             .         
+## CountryColombia                          .         
+## CountryComoros                           1.12006530
+## CountryCosta Rica                        .         
+## CountryCôte d&#39;Ivoire                     1.13286523
+## CountryCroatia                           .         
+## CountryCuba                              .         
+## CountryCyprus                            .         
+## CountryCzech Republic                    .         
+## CountryDemocratic Republic of the Congo  1.11007619
+## CountryDenmark                           .         
+## CountryDjibouti                          1.13266399
+## CountryDominican Republic                .         
+## CountryEcuador                           .         
+## CountryEgypt                             .         
+## CountryEl Salvador                       .         
+## CountryEritrea                           1.10694831
+## CountryEstonia                           .         
+## CountryEthiopia                          1.13460256
+## CountryFinland                           .         
+## CountryFrance                            .         
+## CountryGabon                             1.13494750
+## CountryGambia                            1.12705042
+## CountryGeorgia                           .         
+## CountryGermany                           .         
+## CountryGhana                             1.15557524
+## CountryGreece                            .         
+## CountryGuatemala                         .         
+## CountryGuinea                            1.11943285
+## CountryGuinea-Bissau                     1.10214751
+## CountryGuyana                            .         
+## CountryHaiti                             .         
+## CountryHonduras                          .         
+## CountryHong Kong                         .         
+## CountryHungary                           .         
+## CountryIceland                           .         
+## CountryIndia                             .         
+## CountryIndonesia                         .         
+## CountryIran                              .         
+## CountryIraq                              .         
+## CountryIreland                           .         
+## CountryIsrael                            .         
+## CountryItaly                             .         
+## CountryJamaica                           .         
+## CountryJapan                             .         
+## CountryJordan                            .         
+## CountryKazakhstan                        .         
+## CountryKenya                             1.12005603
+## CountryKosovo                            .         
+## CountryKuwait                            .         
+## CountryKyrgyzstan                        .         
+## CountryLaos                              .         
+## CountryLatvia                            .         
+## CountryLebanon                           .         
+## CountryLesotho                           1.15539342
+## CountryLiberia                           1.13798727
+## CountryLibya                             .         
+## CountryLithuania                         .         
+## CountryLuxembourg                        .         
+## CountryMadagascar                        1.12035687
+## CountryMalawi                            1.13234295
+## CountryMalaysia                          .         
+## CountryMali                              1.13069867
+## CountryMalta                             .         
+## CountryMauritania                        1.12499332
+## CountryMauritius                         1.17165534
+## CountryMexico                            .         
+## CountryMoldova                           .         
+## CountryMongolia                          .         
+## CountryMontenegro                        .         
+## CountryMorocco                           .         
+## CountryMozambique                        1.12312904
+## CountryMyanmar                           .         
+## CountryNamibia                           1.16910851
+## CountryNepal                             .         
+## CountryNetherlands                       .         
+## CountryNew Zealand                       .         
+## CountryNicaragua                         .         
+## CountryNiger                             1.13555941
+## CountryNigeria                           1.12069431
+## CountryNorth Korea                       .         
+## CountryNorway                            .         
+## CountryOman                              .         
+## CountryPakistan                          .         
+## CountryPanama                            .         
+## CountryPapua New Guinea                  .         
+## CountryParaguay                          .         
+## CountryPeru                              .         
+## CountryPhilippines                       .         
+## CountryPoland                            .         
+## CountryPortugal                          .         
+## CountryQatar                             .         
+## CountryRomania                           .         
+## CountryRussia                            .         
+## CountryRwanda                            1.17412129
+## CountrySao Tome &amp; Principe               1.15523513
+## CountrySaudi Arabia                      .         
+## CountrySenegal                           1.15483857
+## CountrySerbia                            .         
+## CountrySierra Leone                      1.12729353
+## CountrySingapore                         .         
+## CountrySlovakia                          .         
+## CountrySlovenia                          .         
+## CountrySomalia                           1.08528596
+## CountrySouth Africa                      1.15410634
+## CountrySouth Korea                       .         
+## CountrySouth Sudan                       1.09421815
+## CountrySpain                             .         
+## CountrySri Lanka                         .         
+## CountrySudan                             1.09435354
+## CountrySuriname                          .         
+## CountrySweden                            .         
+## CountrySwitzerland                       .         
+## CountrySyria                             .         
+## CountryTaiwan                            .         
+## CountryTajikistan                        .         
+## CountryTanzania                          1.13343319
+## CountryThailand                          .         
+## CountryTimor-Leste                       .         
+## CountryTogo                              1.12865146
+## CountryTrinidad and Tobago               .         
+## CountryTunisia                           .         
+## CountryTurkey                            .         
+## CountryTurkmenistan                      .         
+## CountryUganda                            1.11867989
+## CountryUkraine                           .         
+## CountryUnited Arab Emirates              .         
+## CountryUnited Kingdom                    .         
+## CountryUnited States of America          .         
+## CountryUruguay                           .         
+## CountryUzbekistan                        .         
+## CountryVenezuela                         .         
+## CountryVietnam                           .         
+## CountryYemen                             .         
+## CountryZambia                            1.14183466
+## CountryZimbabwe                          1.11040982
+## CPI                                     -0.50517922
+## Volume                                  -0.02343373</code></pre>
+<pre class="r"><code># cross-validating LASSO model
+k=10
+lasso &lt;- data %&gt;% 
+  mutate(Angola= ifelse(Country==&quot;Angola&quot;, 1, 0)) %&gt;%
+  mutate(Benin = ifelse(Country==&quot;Benin&quot;, 1, 0)) %&gt;%
+  mutate(Botswana= ifelse(Country==&quot;Botswana&quot;, 1, 0)) %&gt;%
+  mutate(BurkinaFaso= ifelse(Country==&quot;Burkina Faso&quot;, 1, 0)) %&gt;%
+  mutate(Burundi= ifelse(Country==&quot;Burundi&quot;, 1, 0)) %&gt;%
+  mutate(CaboVerde= ifelse(Country==&quot;Cabo Verde&quot;, 1, 0)) %&gt;%
+  mutate(Cameroon= ifelse(Country==&quot;Cameroon&quot;, 1, 0)) %&gt;%
+  mutate(CentralAfricanRepublic= ifelse(Country==&quot;Central African Republic&quot;, 1, 0)) %&gt;%
+  mutate(Chad= ifelse(Country==&quot;Chad&quot;, 1, 0)) %&gt;%
+  mutate(Comoros= ifelse(Country==&quot;Comoros&quot;, 1, 0)) %&gt;%
+  mutate(CôtedIvoire= ifelse(Country==&quot;Côte d&#39;Ivoire&quot;, 1, 0)) %&gt;%
+  mutate(DemocraticRepublicoftheCongo= ifelse(Country==&quot;Democratic Republic of the Congo&quot;, 1, 0)) %&gt;%
+  mutate(Djibouti= ifelse(Country==&quot;Djibouti&quot;, 1, 0)) %&gt;%
+  mutate(Eritrea= ifelse(Country==&quot;Eritrea&quot;, 1, 0)) %&gt;%
+  mutate(Ethiopia= ifelse(Country==&quot;Ethiopia&quot;, 1, 0)) %&gt;%
+  mutate(Gabon= ifelse(Country==&quot;Gabon&quot;, 1, 0)) %&gt;%
+  mutate(Gambia= ifelse(Country==&quot;Gambia&quot;, 1, 0)) %&gt;%
+  mutate(Ghana= ifelse(Country==&quot;Ghana&quot;, 1, 0)) %&gt;%
+  mutate(Guinea= ifelse(Country==&quot;Guinea&quot;, 1, 0)) %&gt;%
+  mutate(GuineaBissau= ifelse(Country==&quot;Guinea-Bissau&quot;, 1, 0)) %&gt;%
+  mutate(Kenya= ifelse(Country==&quot;Kenya&quot;, 1, 0)) %&gt;%
+  mutate(Lesotho= ifelse(Country==&quot;Lesotho&quot;, 1, 0)) %&gt;%
+  mutate(Liberia= ifelse(Country==&quot;Liberia&quot;, 1, 0)) %&gt;%
+  mutate(Madagascar= ifelse(Country==&quot;Madagascar&quot;, 1, 0)) %&gt;%
+  mutate(Malawi= ifelse(Country==&quot;Malawi&quot;, 1, 0)) %&gt;%
+  mutate(Mali= ifelse(Country==&quot;Mali&quot;, 1, 0)) %&gt;%
+  mutate(Mauritania= ifelse(Country==&quot;Mauritania&quot;, 1, 0)) %&gt;%
+  mutate(Mozambique= ifelse(Country==&quot;Mozambique&quot;, 1, 0)) %&gt;%
+  mutate(Namibia= ifelse(Country==&quot;Namibia&quot;, 1, 0)) %&gt;%
+  mutate(Niger= ifelse(Country==&quot;Niger&quot;, 1, 0)) %&gt;%
+  mutate(Nigeria= ifelse(Country==&quot;Nigeria&quot;, 1, 0)) %&gt;%
+  mutate(Rwanda= ifelse(Country==&quot;Rwanda&quot;, 1, 0)) %&gt;%
+  mutate(SaoTomePrincipe= ifelse(Country==&quot;Sao Tome &amp; Principe&quot;, 1, 0)) %&gt;%
+  mutate(Senegal= ifelse(Country==&quot;Senegal&quot;, 1, 0)) %&gt;%
+  mutate(SierraLeone= ifelse(Country==&quot;Sierra Leone&quot;, 1, 0)) %&gt;%
+  mutate(Somalia= ifelse(Country==&quot;Somalia&quot;, 1, 0)) %&gt;%
+  mutate(SouthAfrica= ifelse(Country==&quot;South Africa&quot;, 1, 0)) %&gt;%
+  mutate(Sudan= ifelse(Country==&quot;Sudan&quot;, 1, 0)) %&gt;%
+  mutate(Tanzania= ifelse(Country==&quot;Tanzania&quot;, 1, 0)) %&gt;%
+  mutate(Togo= ifelse(Country==&quot;Togo&quot;, 1, 0)) %&gt;%
+  mutate(Uganda= ifelse(Country==&quot;Uganda&quot;, 1, 0)) %&gt;%
+  mutate(Zambia= ifelse(Country==&quot;Zambia&quot;, 1, 0)) %&gt;%
+  mutate(Zimbabwe= ifelse(Country==&quot;Zimbabwe&quot;, 1, 0)) %&gt;%
+  dplyr::select(Angola,Benin,Botswana,BurkinaFaso,Burundi,Cameroon,CaboVerde,CentralAfricanRepublic,Chad,Comoros,CôtedIvoire,DemocraticRepublicoftheCongo,Djibouti,Eritrea,Ethiopia,Gabon,Gambia,Ghana,Guinea,GuineaBissau,Kenya,Lesotho,Liberia,Madagascar,Malawi,Mali,Mauritania,Mozambique,Namibia,Niger,Nigeria,Rwanda,SaoTomePrincipe,Senegal,SierraLeone,Somalia,SouthAfrica,Sudan,Tanzania,Togo,Uganda,Zambia,Zimbabwe,Year,CPI,Volume,y)
+
+data1 = lasso[sample(nrow(lasso)),]
+folds = cut(seq(1:nrow(lasso)),breaks=k,labels=F)
+
+diags&lt;-NULL
+for(i in 1:k){      
+  train = data1[folds!=i,]
+  test = data1[folds==i,]
+  truth = test$y
+  
+  fit = glm(y~Angola+Benin+Botswana+BurkinaFaso+Burundi+CaboVerde+Cameroon+CentralAfricanRepublic+Chad+Comoros+CôtedIvoire+DemocraticRepublicoftheCongo+Djibouti+Eritrea+Ethiopia+Gabon+Gambia+Ghana+Guinea+GuineaBissau+Kenya+Lesotho+Liberia+Madagascar+Malawi+Mali+Mauritania+Mozambique+Namibia+Niger+Nigeria+Rwanda+SaoTomePrincipe+Senegal+SierraLeone+Somalia+Somalia+SouthAfrica+Sudan+Tanzania+Togo+Uganda+Zambia+Zimbabwe+Year+CPI+Volume, data=train, family=&quot;binomial&quot;)
+  probs = predict(fit, newdata=test, type = &quot;response&quot;)
+  
+  diags = rbind(diags, class_diag(probs, truth))
+}
+summarize_all(diags, mean)</code></pre>
+<pre><code>##         acc      sens spec ppv       auc
+## 1 0.9878169 0.9560468    1   1 0.9849395</code></pre>
+<p>In computing in-sample classification diagnostics, Accuracy, Sensitivity, Specificity, Precision, and AUC were all equal to 1. This would suggest the logistic regression model performed perfectly when using all the variables in the dataset. For the 10-fold CV, the same is true. All metrics were equal 1 for both in-sample and the average out-of-sample classification diagnostics. When given access to the country data, it seems the model is predicting regions perfectly, even under cross-validation. After running the LASSO, it became apparent why the models were performing so well. The variables retained by LASSO accounted for every country belonging to SSA in the dataset. Variable CPI and Volume were also retained, but it seems the country data is what allows the models to perform perfectly. In performing the 10-fold CV using only lasso-selected variables, the model was slightly penalized, which resulted in a out-of-sample AUC that was lower than the initial logistic regressions (0.985). LASSO’s regularization of variables due to the complexity of the model likely caused the AUC to decrease. Nevertheless, the overall prediction performance is great.</p>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

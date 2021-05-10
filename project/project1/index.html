@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Brandon Kimble" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Project_1</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/post/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project/project1/">Project_1</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<pre class="r"><code>library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggExtra)
+
+corruption_index = read.csv(&quot;merged_cpi_data.csv&quot;)
+crypto_volume = read.csv(&quot;Book2.csv&quot;)
+glimpse(corruption_index)</code></pre>
+<pre><code>## Rows: 1,772
+## Columns: 34
+## $ Year                                    &lt;int&gt; 2010, 2010, 2010, 2010, 2010, …
+## $ Country                                 &lt;chr&gt; &quot;Denmark&quot;, &quot;New Zealand&quot;, &quot;Sin…
+## $ CPI.Score                               &lt;dbl&gt; 93, 93, 93, 92, 92, 89, 88, 87…
+## $ Rank                                    &lt;int&gt; 1, 1, 1, 4, 4, 6, 7, 8, 8, 10,…
+## $ Number.of.Sources                       &lt;int&gt; 6, 6, 9, 6, 6, 6, 6, 8, 6, 6, …
+## $ Minimum.score                           &lt;dbl&gt; 89, 89, 89, 89, 89, 84, 85, 75…
+## $ Maximum.score                           &lt;dbl&gt; 95, 95, 95, 95, 95, 92, 92, 92…
+## $ Standard.Error                          &lt;dbl&gt; 2, 2, 2, 2, 2, 3, 3, 6, 7, 7, …
+## $ X90..Confidence.Interval..Higher.bound. &lt;dbl&gt; 94, 95, 94, 93, 94, 90, 90, 90…
+## $ X90..Confidence.Interval..Lower.bound.  &lt;dbl&gt; 91, 92, 92, 91, 91, 87, 87, 83…
+## $ ADB                                     &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ AfDB                                    &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ BF_SGI                                  &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ BF_TI                                   &lt;dbl&gt; NA, NA, 9.3, NA, NA, NA, NA, N…
+## $ EIU                                     &lt;dbl&gt; 8.9, 8.9, 8.9, 8.9, 8.9, 8.9, …
+## $ FH                                      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ GI                                      &lt;dbl&gt; 9.2, 9.2, 9.2, 9.2, 9.2, 9.2, …
+## $ IMD                                     &lt;dbl&gt; 9.5, 9.5, 9.2, 9.4, 9.3, 8.8, …
+## $ PERC                                    &lt;dbl&gt; NA, NA, 9.4, NA, NA, NA, NA, 8…
+## $ PRS                                     &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ TI                                      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ VDP                                     &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ WB                                      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ WEF                                     &lt;dbl&gt; 9.2, 9.5, 9.5, 9.1, 9.4, 8.9, …
+## $ WJP                                     &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA…
+## $ ISO3                                    &lt;chr&gt; &quot;DNK&quot;, &quot;NZL&quot;, &quot;SGP&quot;, &quot;FIN&quot;, &quot;S…
+## $ Region                                  &lt;chr&gt; &quot;WE/EU&quot;, &quot;AP&quot;, &quot;AP&quot;, &quot;WE/EU&quot;, …
+## $ WB.Code                                 &lt;chr&gt; &quot;DNK&quot;, &quot;NZL&quot;, &quot;SGP&quot;, &quot;FIN&quot;, &quot;S…
+## $ OECD                                    &lt;chr&gt; &quot;y&quot;, &quot;y&quot;, &quot;&quot;, &quot;y&quot;, &quot;y&quot;, &quot;y&quot;, &quot;…
+## $ G20                                     &lt;chr&gt; &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;y&quot;, &quot;&quot;, &quot;…
+## $ BRICS                                   &lt;chr&gt; &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;…
+## $ EU                                      &lt;chr&gt; &quot;y&quot;, &quot;&quot;, &quot;&quot;, &quot;y&quot;, &quot;y&quot;, &quot;&quot;, &quot;y&quot;…
+## $ Arab.states                             &lt;chr&gt; &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;…
+## $ IFS.Code                                &lt;dbl&gt; 128, 196, 576, 172, 144, 156, …</code></pre>
+<pre class="r"><code>glimpse(crypto_volume)</code></pre>
+<pre><code>## Rows: 24
+## Columns: 10
+## $ date    &lt;chr&gt; &quot;3/31/13&quot;, &quot;6/30/13&quot;, &quot;9/30/13&quot;, &quot;12/31/13&quot;, &quot;3/31/14&quot;, &quot;6/30/…
+## $ WE.EU   &lt;dbl&gt; 2108.18, 381983.43, 1250979.14, 6511564.37, 5379350.44, 487706…
+## $ AP      &lt;dbl&gt; 78578.83, 635382.94, 1571484.49, 3665050.11, 3995609.99, 45698…
+## $ AME     &lt;dbl&gt; 17744.03, 844606.08, 7899008.67, 18990323.42, 23759857.78, 286…
+## $ AP.1    &lt;dbl&gt; 9.741942e+02, 1.075482e+05, 2.742339e+05, 1.950434e+06, 1.9430…
+## $ MENA    &lt;dbl&gt; 2.636820e+01, 2.601326e+03, 1.368248e+03, 2.250539e+04, 1.1406…
+## $ SSA     &lt;chr&gt; &quot;N/A&quot;, &quot;3476.567281&quot;, &quot;66185.26324&quot;, &quot;231357.6616&quot;, &quot;455816.96…
+## $ WE.EU.1 &lt;dbl&gt; 300911.4, 3152848.1, 5105933.6, 19725685.9, 17609192.1, 158850…
+## $ AME.1   &lt;dbl&gt; 13595.94, 16520.13, 95082.59, 694662.88, 1148378.53, 761903.14…
+## $ ECA     &lt;dbl&gt; 5.866227e+02, 6.926473e+04, 1.363988e+05, 1.169835e+06, 1.7420…</code></pre>
+<pre class="r"><code>volume = crypto_volume %&gt;%
+    mutate(`WE/EU` = (WE.EU + WE.EU.1)/2, .keep = &quot;unused&quot;) %&gt;%
+    mutate(AP = (AP + AP.1)/2, .keep = &quot;unused&quot;) %&gt;%
+    mutate(AME = (AME + AME.1)/2, .keep = &quot;unused&quot;) %&gt;%
+    mutate(date = as.Date(date, format = &quot;%m/%d/%y&quot;)) %&gt;%
+    mutate(Year = format(date, format = &quot;%Y&quot;)) %&gt;%
+    mutate_all(as.numeric) %&gt;%
+    na.omit() %&gt;%
+    pivot_longer(cols = 2:7, names_to = &quot;Region&quot;, values_to = &quot;Volume&quot;) %&gt;%
+    group_by(Year, Region) %&gt;%
+    summarize(Volume = mean(Volume))
+
+data = corruption_index %&gt;%
+    select(Year, Country, CPI = CPI.Score, Region) %&gt;%
+    filter(Year &gt;= 2013 &amp; Year &lt;= 2018) %&gt;%
+    na.omit() %&gt;%
+    left_join(volume, by = c(&quot;Year&quot;, &quot;Region&quot;))</code></pre>
+<p>Cryptocurrency is regarded by some to be the catalyst that sends the world into the next revolution, much like the internet did in the late 90s. Cryptocurrency could possibly be the most democratizing technology created thus far in history. The potential of a currency with no overhead is massive. With the growth and widespread use of cryptocurrencies, comes forms of banking, business, and who knows what else. The desire for democratization of everything, pushed forward many novel technologies, and this theme is supported by history. If a technology democratizes an aspect of society that was once not available to the public, that technology will inevitably become the new norm, at least in a democracy. With this is mind, my thought was that, if folks in other countries were unhappy with their government (lets say due to corruption), perhaps they might turn to cryptocurrencies as a hedge against a corrupt system. For this reason, I chose the annual Corruption Perception Index and the largest peer-to-peer cryptocurrency exchange, LocalBitcoin, to gather data from. I am only interested in the cryptocurrency exchange volume in US dollars (e.g., $10M),and the corruption perception index (CPI) for each year, along the country and region the CPI score belong to. Potential problems may come up, such as needing to average out the trading volume data for every year rather than every month. This will be the case if there is not a good way to merge data that includes different time scales. To tidy up my datasets in preparation to be merged, I first combined countries in columns that belong to the same region. Then, I formatted my dates to only include the year rather than month, day, and year. Being that the timescales were now I years, I then averaged the trading volume for given year. Since, Cryptocurrency only really started gaining in traction around 2013 so, the dates ranges from 2013 to 2018. The regional abbreviations go as follows: AME - Americas, SSA - Sub-Saharan Africa, ECA - Eastern Europe &amp; Central Asia, MENA - Middle East And North Africa, WE/EU - Western Europe &amp; European Union, and AP - Asia Pacific. Given the data, I expect trading volume to increase in a region if the region’s corruption perception index increases. That is if people feel as though their government is corrupt, they will turn to unregulated forms of currency.</p>
+<pre class="r"><code>data %&gt;%
+    summarize(minYear = min(Year), maxYear = max(Year))</code></pre>
+<pre><code>##   minYear maxYear
+## 1    2013    2018</code></pre>
+<pre class="r"><code>data %&gt;%
+    summarize(uniqueCountries = n_distinct(Country))</code></pre>
+<pre><code>##   uniqueCountries
+## 1             184</code></pre>
+<pre class="r"><code>data %&gt;%
+    group_by(Region) %&gt;%
+    summarize(frequency = n())</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   Region frequency
+##   &lt;chr&gt;      &lt;int&gt;
+## 1 AME          186
+## 2 AP           174
+## 3 ECA          114
+## 4 MENA         108
+## 5 SSA          288
+## 6 WE/EU        186</code></pre>
+<pre class="r"><code>data %&gt;%
+    group_by(Region) %&gt;%
+    summarize(meanTradingVolume = mean(Volume), sdTradingVolume = sd(Volume)) %&gt;%
+    arrange(desc(meanTradingVolume))</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   Region meanTradingVolume sdTradingVolume
+##   &lt;chr&gt;              &lt;dbl&gt;           &lt;dbl&gt;
+## 1 ECA            66523291.       80009575.
+## 2 AME            47366120.       37382091.
+## 3 AP             30747016.       34621349.
+## 4 WE/EU          28014125.       23350551.
+## 5 SSA            21952631.       27806037.
+## 6 MENA            4210116.        6134045.</code></pre>
+<pre class="r"><code>data %&gt;%
+    group_by(Region, Country) %&gt;%
+    summarize(totPercentChange = (last(CPI) - first(CPI))/first(CPI)) %&gt;%
+    arrange(desc(totPercentChange))</code></pre>
+<pre><code>## # A tibble: 184 x 3
+## # Groups:   Region [6]
+##    Region Country       totPercentChange
+##    &lt;chr&gt;  &lt;chr&gt;                    &lt;dbl&gt;
+##  1 AP     Afghanistan              1    
+##  2 AP     North Korea              0.75 
+##  3 ECA    Belarus                  0.517
+##  4 SSA    Sudan                    0.455
+##  5 AP     Myanmar                  0.381
+##  6 AME    Guyana                   0.370
+##  7 ECA    Uzbekistan               0.353
+##  8 SSA    Gambia                   0.321
+##  9 SSA    Côte d&#39;Ivoire            0.296
+## 10 ECA    Ukraine                  0.28 
+## # … with 174 more rows</code></pre>
+<p>The third summary statistic details number of time each region shows up in the dataset. Since, countries show up more than once (once for every year), these frequency values do not merely denote the number of countries represent within a region, but represents the total number of time a particular region shows up in the dataset. One could easy derive the proportion of regional representation within the data from the frequencies. The forth summary statistic just shows the average cryptocurrency trading volume for a given region. The last statistic, represents the percent change in a countries corruption perception index from the first year is was recorded (2013) to the last (2018). Essentially, this represents the change sentiment in a countries’ people toward the established government.</p>
+<pre class="r"><code>cormat = data %&gt;%
+    select(Year, CPI, Volume) %&gt;%
+    cor(use = &quot;pair&quot;)
+
+tidycor &lt;- cormat %&gt;%
+    as.data.frame %&gt;%
+    rownames_to_column(&quot;var1&quot;) %&gt;%
+    pivot_longer(-1, names_to = &quot;var2&quot;, values_to = &quot;correlation&quot;)
+
+tidycor %&gt;%
+    ggplot(aes(var1, var2, fill = correlation)) + geom_tile() + 
+    scale_fill_gradient2(low = &quot;red&quot;, mid = &quot;white&quot;, high = &quot;blue&quot;) + 
+    geom_text(aes(label = round(correlation, 2)), color = &quot;black&quot;, 
+        size = 5) + theme(axis.text.x = element_text(angle = 90, 
+    hjust = 1)) + coord_fixed()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(data, aes(x = as.factor(Year), y = CPI)) + geom_boxplot(outlier.shape = NA) + 
+    geom_jitter(alpha = 0.5, aes(color = Country), show.legend = F) + 
+    geom_smooth(method = &quot;lm&quot;, se = T, aes(group = 1)) + facet_wrap(~Region) + 
+    ggtitle(&quot;Change in Corruption Perception per Region&quot;) + ylab(&quot;CPI (Corruption Perception Index)&quot;) + 
+    xlab(&quot;Year&quot;) + theme(plot.title = element_text(hjust = 0.5)) + 
+    scale_y_continuous(breaks = seq(0, 100, 10))</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-4-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(data, aes(x = as.factor(Year), y = CPI, fill = Volume)) + 
+    geom_boxplot(outlier.shape = NA) + scale_fill_gradient(low = &quot;red&quot;, 
+    high = &quot;green&quot;) + facet_wrap(~Region) + ggtitle(&quot;Change in Crypocurrency Trading Volume per Region&quot;) + 
+    ylab(&quot;CPI (Corruption Perception Index)&quot;) + xlab(&quot;Year&quot;) + 
+    theme(plot.title = element_text(hjust = 0.5)) + scale_y_continuous(breaks = seq(0, 
+    100, 10))</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-4-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(data, aes(x = Year, y = CPI, color = Region, size = Volume)) + 
+    geom_point(stat = &quot;summary&quot;) + scale_size_continuous(range = c(5, 
+    20)) + scale_size(limits = c(0, 2.5e+08)) + ggtitle(&quot;Change in Corruption Perception and Cryptocurrency Trading Volume&quot;) + 
+    ylab(&quot;CPI (Corruption Perception Index)&quot;) + xlab(&quot;Year&quot;) + 
+    theme(plot.title = element_text(hjust = 0.5)) + scale_y_continuous(breaks = seq(0, 
+    100, 10))</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-4-4.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The correlation heatmap shows very little correlation between Volume and CPI, which not what I initially expected. However, given the lack of history behind cryptocurrency, I realize it is difficult to identify any relationships. The second, plot is more than just colorful, it shows that the overall corruption perception index for a given region is largely consistent over time. This is mostly likely why there is not much of relationship to be found between, CPI and cryptocurrency trading volume – the over all corruption index of a region simply doesn’t change much over a six year period. The third plot represents how regional cryptocurrency trading volume changes over time. One can see the volume typically increases over time, as shown by the increasingly green boxplots within each region. The only outlier here is the Middle East And North Africa, which stay pretty consistent in terms of volume. Eastern Europe &amp; Central Asia, however, increased in trading pretty drastically between 2015 and 2018. One can assume that the region’s low overall CPIU score could have something to do the it’s populations quick adoption of crytocurrency. The last and final plot is meant to show the overall trend of growing cryptocurrency trading volumes given time. Here, time seems to be the best predictor of crypto adoption, which is to be expected.</p>
+<pre class="r"><code>library(cluster)
+numdata = data %&gt;%
+    select_if(is.numeric)
+
+sil_width &lt;- vector()
+for (i in 2:10) {
+    pam_fit &lt;- pam(numdata, k = i)
+    sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = &quot;k&quot;, 
+    breaks = 1:10)</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>pam1 = numdata %&gt;%
+    scale %&gt;%
+    pam(k = 3)
+pam1</code></pre>
+<pre><code>## Medoids:
+##       ID       Year        CPI     Volume
+## [1,] 376 -0.3014219  1.3838758 -0.4800246
+## [2,] 300 -0.8833258 -0.6110677 -0.6841273
+## [3,] 792  0.8623861 -0.3041533  1.0441694
+## Clustering vector:
+##   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [38] 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+##  [75] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 956 entries ]
+## Objective function:
+##     build      swap 
+## 1.0870864 0.9789137 
+## 
+## Available components:
+##  [1] &quot;medoids&quot;    &quot;id.med&quot;     &quot;clustering&quot; &quot;objective&quot;  &quot;isolation&quot; 
+##  [6] &quot;clusinfo&quot;   &quot;silinfo&quot;    &quot;diss&quot;       &quot;call&quot;       &quot;data&quot;</code></pre>
+<pre class="r"><code>pamclust = numdata %&gt;%
+    mutate(cluster = as.factor(pam1$clustering))
+pamclust %&gt;%
+    ggplot(aes(CPI, Volume, color = cluster)) + geom_point()</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(GGally)
+ggpairs(pamclust, columns = 1:4, aes(color = cluster))</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-5-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot(pam1, which = 2)</code></pre>
+<p><img src="/project/project1_files/figure-html/unnamed-chunk-5-4.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Given that regions consist of many different countries all with their own governments and systems it is easy to se why the average silhouette with suggests the structure of the clustered data is weak and could be artificial. There is simply too much variation in the CPI score of countries with a region. As expected, trading volume and progression through time yeilded a very positive correlation. I did not expect the relationship between CPI scores and Volume to be so low. It seems the lower the CPI score of a region, the greater the trading volume. The relationships betwee the other variables ans time are largly unimportant. The CPI scores of countries typically don’t change over a few years, while cryptocurrency trading volume increases across all regions.</p>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
